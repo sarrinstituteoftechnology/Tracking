@@ -23,14 +23,12 @@
             padding: 40px 24px;
         }
 
-        /* Tracking Container */
         .tracking-container {
             max-width: 800px;
             width: 100%;
             margin: 0 auto;
         }
 
-        /* Header */
         .tracking-header {
             text-align: center;
             margin-bottom: 40px;
@@ -59,7 +57,6 @@
             border-radius: 3px;
         }
 
-        /* Card */
         .tracking-card {
             background: #0F212A;
             border-radius: 24px;
@@ -68,7 +65,6 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
-        /* Input Section */
         .input-section {
             padding: 32px;
             border-bottom: 1px solid #2A3A44;
@@ -139,7 +135,26 @@
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         }
 
-        /* Status Section */
+        .track-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         .status-section {
             padding: 32px;
             display: none;
@@ -155,7 +170,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Application Info */
         .app-info {
             background: #0A1922;
             border-radius: 16px;
@@ -199,7 +213,6 @@
             word-break: break-all;
         }
 
-        /* Timeline */
         .timeline {
             position: relative;
             margin: 24px 0;
@@ -292,7 +305,6 @@
             font-family: monospace;
         }
 
-        /* Countdown Timer */
         .countdown-timer {
             background: rgba(76, 175, 80, 0.1);
             border-radius: 16px;
@@ -316,7 +328,6 @@
             letter-spacing: 2px;
         }
 
-        /* Error Message */
         .error-message {
             background: rgba(220, 53, 69, 0.15);
             border: 1px solid rgba(220, 53, 69, 0.3);
@@ -324,7 +335,7 @@
             padding: 16px;
             text-align: center;
             color: #dc3545;
-            margin-top: 20px;
+            margin: 20px;
             display: none;
         }
 
@@ -333,7 +344,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Back Button */
         .back-link {
             text-align: center;
             margin-top: 24px;
@@ -353,7 +363,6 @@
             color: #4CAF50;
         }
 
-        /* Responsive */
         @media (max-width: 600px) {
             .input-wrapper {
                 flex-direction: column;
@@ -420,6 +429,10 @@
                             <span class="detail-label">Submitted On</span>
                             <span class="detail-value" id="displayDate">-</span>
                         </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email</span>
+                            <span class="detail-value" id="displayEmail">-</span>
+                        </div>
                     </div>
                 </div>
 
@@ -433,7 +446,7 @@
                         <div class="timeline-content">
                             <div class="timeline-title">Team Review</div>
                             <div class="timeline-desc">Our admissions team is reviewing your application for completeness and eligibility.</div>
-                            <div class="timeline-time" id="step1Time">-</div>
+                            <div class="timeline-time" id="step1Time">Stage: 0 - 2 hours</div>
                         </div>
                     </div>
                     <div class="timeline-step" id="step2">
@@ -441,7 +454,7 @@
                         <div class="timeline-content">
                             <div class="timeline-title">Data Verification & Matching</div>
                             <div class="timeline-desc">Verifying your documents, matching your profile with program requirements, and conducting initial assessment.</div>
-                            <div class="timeline-time" id="step2Time">-</div>
+                            <div class="timeline-time" id="step2Time">Stage: 2 - 8 hours</div>
                         </div>
                     </div>
                     <div class="timeline-step" id="step3">
@@ -449,7 +462,7 @@
                         <div class="timeline-content">
                             <div class="timeline-title">Contact Soon</div>
                             <div class="timeline-desc">Our team will contact you shortly via email or phone for further guidance and next steps.</div>
-                            <div class="timeline-time" id="step3Time">-</div>
+                            <div class="timeline-time" id="step3Time">Stage: After 8 hours</div>
                         </div>
                     </div>
                 </div>
@@ -472,72 +485,77 @@
         </div>
     </div>
 
-    <script>
-        // ========== APPLICATION DATA STORAGE ==========
-        // In a real implementation, this would be fetched from a database.
-        // For demo purposes, we store applications in localStorage when submitted.
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
         
-        // Function to get all stored applications
-        function getAllApplications() {
-            const apps = localStorage.getItem('sarr_applications');
-            if (apps) {
-                return JSON.parse(apps);
-            }
-            return [];
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUE22yKvFNgmiRZ-4kn_Ev9oAuDZqfr0w",
+            authDomain: "sarr-iot.firebaseapp.com",
+            projectId: "sarr-iot",
+            storageBucket: "sarr-iot.firebasestorage.app",
+            messagingSenderId: "74008875558",
+            appId: "1:74008875558:web:0a4a5896a00acee6bf4ce7",
+            measurementId: "G-THDZBFCR9W"
+        };
+        
+        // Initialize Firebase
+        let db;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            console.log("✅ Firebase connected successfully");
+        } catch (error) {
+            console.error("❌ Firebase initialization error:", error);
+            document.getElementById('errorMessage').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Connection error. Please try again later.';
+            document.getElementById('errorMessage').classList.add('show');
         }
         
-        // Function to save an application (called from the form page)
-        function saveApplication(applicationData) {
-            const apps = getAllApplications();
-            apps.push(applicationData);
-            localStorage.setItem('sarr_applications', JSON.stringify(apps));
-        }
-        
-        // Function to get application by ID
-        function getApplicationById(appId) {
-            const apps = getAllApplications();
-            return apps.find(app => app.applicationId === appId);
-        }
-        
-        // Function to calculate application status based on submission time
-        function getApplicationStatus(submissionTime) {
+        // Function to get application status based on submission time
+        function getApplicationStatus(submissionTimestamp) {
             const now = new Date().getTime();
-            const submitted = new Date(submissionTime).getTime();
+            const submitted = submissionTimestamp instanceof Date ? submissionTimestamp.getTime() : new Date(submissionTimestamp).getTime();
             const elapsedHours = (now - submitted) / (1000 * 60 * 60);
             
             // Stage 1: First 2 hours - Team Checking
             if (elapsedHours < 2) {
+                const remainingMs = (2 - elapsedHours) * 60 * 60 * 1000;
                 return {
                     stage: 1,
                     stageName: "Team Review",
                     description: "Our admissions team is reviewing your application for completeness and eligibility.",
-                    remainingTime: (2 - elapsedHours) * 60 * 60 * 1000,
-                    totalStageDuration: 2 * 60 * 60 * 1000,
-                    completedStages: 0
+                    remainingTime: remainingMs,
+                    completedStages: 0,
+                    stageStartTime: submitted,
+                    stageEndTime: submitted + (2 * 60 * 60 * 1000)
                 };
             }
             // Stage 2: Next 6 hours (2 to 8 hours total) - Matching Your Data
             else if (elapsedHours < 8) {
                 const stageElapsed = elapsedHours - 2;
+                const remainingMs = (6 - stageElapsed) * 60 * 60 * 1000;
                 return {
                     stage: 2,
                     stageName: "Data Verification & Matching",
                     description: "Verifying your documents, matching your profile with program requirements, and conducting initial assessment.",
-                    remainingTime: (6 - stageElapsed) * 60 * 60 * 1000,
-                    totalStageDuration: 6 * 60 * 60 * 1000,
-                    completedStages: 1
+                    remainingTime: remainingMs,
+                    completedStages: 1,
+                    stageStartTime: submitted + (2 * 60 * 60 * 1000),
+                    stageEndTime: submitted + (8 * 60 * 60 * 1000)
                 };
             }
             // Stage 3: After 8 hours - Contact Soon
             else {
-                const stageElapsed = elapsedHours - 8;
                 return {
                     stage: 3,
                     stageName: "Contact Soon",
                     description: "Our team will contact you shortly via email or phone for further guidance and next steps.",
                     remainingTime: null,
-                    totalStageDuration: null,
-                    completedStages: 2
+                    completedStages: 2,
+                    stageStartTime: submitted + (8 * 60 * 60 * 1000),
+                    stageEndTime: null
                 };
             }
         }
@@ -552,9 +570,10 @@
         }
         
         // Function to format date
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString('en-PK', {
+        function formatDate(date) {
+            if (!date) return 'N/A';
+            const d = date instanceof Date ? date : new Date(date);
+            return d.toLocaleString('en-PK', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
@@ -564,31 +583,20 @@
         }
         
         // Function to update timeline display
-        function updateTimelineDisplay(status, submissionTime, appData) {
+        let updateInterval = null;
+        
+        function updateTimelineDisplay(status, appData) {
             const step1 = document.getElementById('step1');
             const step2 = document.getElementById('step2');
             const step3 = document.getElementById('step3');
-            const step1Time = document.getElementById('step1Time');
-            const step2Time = document.getElementById('step2Time');
-            const step3Time = document.getElementById('step3Time');
             const timerValue = document.getElementById('timerValue');
-            
-            // Calculate stage completion times
-            const submitted = new Date(submissionTime).getTime();
-            const stage1End = submitted + (2 * 60 * 60 * 1000);
-            const stage2End = submitted + (8 * 60 * 60 * 1000);
-            
-            // Set stage completion times display
-            step1Time.textContent = `Stage duration: 0 - 2 hours | Completed: ${status.completedStages >= 1 ? '✓' : 'Pending'}`;
-            step2Time.textContent = `Stage duration: 2 - 8 hours | Completed: ${status.completedStages >= 2 ? '✓' : 'Pending'}`;
-            step3Time.textContent = `Stage duration: After 8 hours | ${status.stage === 3 ? 'In Progress' : 'Pending'}`;
             
             // Reset all steps
             step1.classList.remove('completed', 'active');
             step2.classList.remove('completed', 'active');
             step3.classList.remove('completed', 'active');
             
-            // Set current stage based on status
+            // Set completed stages
             if (status.completedStages >= 1) {
                 step1.classList.add('completed');
             }
@@ -599,31 +607,35 @@
             // Set active stage
             if (status.stage === 1) {
                 step1.classList.add('active');
-                if (status.remainingTime !== null) {
+                if (status.remainingTime !== null && status.remainingTime > 0) {
                     timerValue.textContent = formatTimeRemaining(status.remainingTime);
+                } else {
+                    timerValue.textContent = "Completing soon...";
                 }
             } else if (status.stage === 2) {
                 step2.classList.add('active');
-                if (status.remainingTime !== null) {
+                if (status.remainingTime !== null && status.remainingTime > 0) {
                     timerValue.textContent = formatTimeRemaining(status.remainingTime);
+                } else {
+                    timerValue.textContent = "Completing soon...";
                 }
             } else if (status.stage === 3) {
                 step3.classList.add('active');
                 timerValue.textContent = "Contacting soon";
             }
             
-            // Store current update interval reference
-            if (window.updateInterval) {
-                clearInterval(window.updateInterval);
+            // Clear previous interval
+            if (updateInterval) {
+                clearInterval(updateInterval);
             }
             
             // Start live countdown for active stage
             if (status.stage === 1 || status.stage === 2) {
-                window.updateInterval = setInterval(() => {
-                    const newStatus = getApplicationStatus(submissionTime);
+                updateInterval = setInterval(() => {
+                    const newStatus = getApplicationStatus(appData.submittedAt);
                     if (newStatus.stage !== status.stage) {
                         // Stage changed, refresh timeline
-                        updateTimelineDisplay(newStatus, submissionTime, appData);
+                        updateTimelineDisplay(newStatus, appData);
                     } else {
                         const remaining = newStatus.remainingTime;
                         if (remaining !== null && remaining > 0) {
@@ -635,11 +647,12 @@
         }
         
         // Main tracking function
-        function trackApplication() {
+        async function trackApplication() {
             const input = document.getElementById('trackingId');
             const appId = input.value.trim();
             const statusSection = document.getElementById('statusSection');
             const errorDiv = document.getElementById('errorMessage');
+            const trackBtn = document.getElementById('trackBtn');
             
             if (!appId) {
                 errorDiv.textContent = 'Please enter your Application ID.';
@@ -648,67 +661,80 @@
                 return;
             }
             
-            // Get application from storage
-            const appData = getApplicationById(appId);
-            
-            if (!appData) {
-                errorDiv.textContent = 'No application found with this ID. Please check and try again.';
+            if (!db) {
+                errorDiv.textContent = 'Database connection error. Please refresh and try again.';
                 errorDiv.classList.add('show');
-                statusSection.classList.remove('active');
                 return;
             }
             
+            // Show loading state
+            trackBtn.disabled = true;
+            trackBtn.innerHTML = '<span class="loading-spinner"></span> Searching...';
             errorDiv.classList.remove('show');
+            statusSection.classList.remove('active');
             
-            // Update application info display
-            document.getElementById('displayAppId').textContent = appData.applicationId;
-            document.getElementById('displayName').textContent = appData.fullName || 'Not specified';
-            document.getElementById('displayCourse').textContent = appData.selectedCourse || 'Not specified';
-            document.getElementById('displayDate').textContent = formatDate(appData.submittedAt || new Date().toISOString());
-            
-            // Calculate status based on submission time
-            const submissionTime = appData.submittedAt || new Date().toISOString();
-            const status = getApplicationStatus(submissionTime);
-            
-            // Update timeline display
-            updateTimelineDisplay(status, submissionTime, appData);
-            
-            // Show status section
-            statusSection.classList.add('active');
-        }
-        
-        // Add sample application for demo purposes (if none exist)
-        function initializeSampleData() {
-            const apps = getAllApplications();
-            if (apps.length === 0) {
-                // Create a sample application for demo
-                const sampleApp = {
-                    applicationId: "SARR-DEMO-2025-001",
-                    fullName: "Ali Raza",
-                    selectedCourse: "Web Development (Full Stack)",
-                    submittedAt: new Date(Date.now() - (1 * 60 * 60 * 1000)).toISOString(), // 1 hour ago
-                    email: "ali.raza@example.com"
-                };
-                saveApplication(sampleApp);
+            try {
+                // Query Firestore for application with matching ID
+                const applicationsRef = collection(db, "applications");
+                const q = query(applicationsRef, where("applicationId", "==", appId));
+                const querySnapshot = await getDocs(q);
                 
-                // Add another sample at different stage
-                const sampleApp2 = {
-                    applicationId: "SARR-DEMO-2025-002",
-                    fullName: "Fatima Khan",
-                    selectedCourse: "AI & Machine Learning Automation",
-                    submittedAt: new Date(Date.now() - (4 * 60 * 60 * 1000)).toISOString(), // 4 hours ago
-                    email: "fatima.khan@example.com"
-                };
-                saveApplication(sampleApp2);
+                if (querySnapshot.empty) {
+                    errorDiv.textContent = 'No application found with this ID. Please check and try again.';
+                    errorDiv.classList.add('show');
+                    trackBtn.disabled = false;
+                    trackBtn.innerHTML = '<i class="fas fa-chart-line"></i> Track Application';
+                    return;
+                }
                 
-                const sampleApp3 = {
-                    applicationId: "SARR-DEMO-2025-003",
-                    fullName: "Usman Ahmed",
-                    selectedCourse: "Cybersecurity",
-                    submittedAt: new Date(Date.now() - (10 * 60 * 60 * 1000)).toISOString(), // 10 hours ago
-                    email: "usman.ahmed@example.com"
-                };
-                saveApplication(sampleApp3);
+                // Get the first matching document
+                let appData = null;
+                querySnapshot.forEach((doc) => {
+                    appData = { id: doc.id, ...doc.data() };
+                });
+                
+                if (!appData) {
+                    errorDiv.textContent = 'Application data could not be retrieved.';
+                    errorDiv.classList.add('show');
+                    trackBtn.disabled = false;
+                    trackBtn.innerHTML = '<i class="fas fa-chart-line"></i> Track Application';
+                    return;
+                }
+                
+                // Update application info display
+                document.getElementById('displayAppId').textContent = appData.applicationId || appId;
+                document.getElementById('displayName').textContent = appData.fullName || 'Not specified';
+                document.getElementById('displayCourse').textContent = appData.selectedCourse || 'Not specified';
+                document.getElementById('displayEmail').textContent = appData.email || 'Not specified';
+                
+                // Handle submittedAt timestamp (Firestore Timestamp or string)
+                let submittedAt;
+                if (appData.submittedAt && appData.submittedAt.toDate) {
+                    submittedAt = appData.submittedAt.toDate();
+                } else if (appData.submittedAt) {
+                    submittedAt = new Date(appData.submittedAt);
+                } else {
+                    submittedAt = new Date();
+                }
+                
+                document.getElementById('displayDate').textContent = formatDate(submittedAt);
+                
+                // Calculate status based on submission time
+                const status = getApplicationStatus(submittedAt);
+                
+                // Update timeline display
+                updateTimelineDisplay(status, { submittedAt: submittedAt });
+                
+                // Show status section
+                statusSection.classList.add('active');
+                
+            } catch (error) {
+                console.error("Error fetching application:", error);
+                errorDiv.textContent = 'Error connecting to database. Please try again.';
+                errorDiv.classList.add('show');
+            } finally {
+                trackBtn.disabled = false;
+                trackBtn.innerHTML = '<i class="fas fa-chart-line"></i> Track Application';
             }
         }
         
@@ -720,14 +746,8 @@
             }
         });
         
-        // Initialize sample data on load
-        initializeSampleData();
-        
-        console.log("✅ Tracking portal ready with sample data");
-        console.log("📋 Sample Application IDs:");
-        console.log("   - SARR-DEMO-2025-001 (Stage 1: Team Review)");
-        console.log("   - SARR-DEMO-2025-002 (Stage 2: Data Verification)");
-        console.log("   - SARR-DEMO-2025-003 (Stage 3: Contact Soon)");
+        console.log("✅ Tracking portal ready with Firebase integration");
+        console.log("📋 Enter your Application ID to check status");
     </script>
 </body>
 </html>
